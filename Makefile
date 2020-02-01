@@ -1,11 +1,15 @@
 FLAGS=-Wall -pedantic
-LIBS=-lGL -lGLU -lglut -lGLEW
+
+LIBS=-lGL -lglut -lGLEW
+
 IDIR=include
 SDIR=src
+
+SRC=${wildcard ${SDIR}/*.cpp}
 OUT=biggly_graphics
 
-${OUT}: ${SDIR}/*.cpp
-	g++ -o $@ $< ${FLAGS} ${LIBS}
+${OUT}: ${SRC}
+	g++ -I${IDIR} -o $@ $^ ${FLAGS} ${LIBS}
 
 clean:
 	rm biggly_graphics
