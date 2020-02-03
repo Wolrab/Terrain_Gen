@@ -1,29 +1,32 @@
-/**
- * 
- */ 
-
-#include <iostream>
+// OpenGL
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+
+// GLM
+#include <glm/vec4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
+// stdlib
 #include <string>
+#include <iostream>
+
+// c
 #include <math.h>
-#include <assert.h>
-#include <sys/time.h>
-#include "Math.h"
-#include "Util.h"
+#include <assert.h> // TODO: Use actuall c++ assertions
+
+// local
+#include "shader.h"
 
 using namespace std;
 
 GLuint VBO;
-
-GLuint shaderProgram;
-GLint scaleLoc;
+Shader *shaderProgram;
 
 const int WINDOW_WIDTH = 640;
 const int WINDOW_HEIGHT = 480;
 
-const char* VS_FNAME = "src/Basic.vs";
-const char* FS_FNAME = "src/Basic.fs";
+string VS_FNAME = "src/basic.vs";
+string FS_FNAME = "src/basic.fs";
 
 /** 
  * Callback functions
@@ -33,11 +36,14 @@ void glutRender() {
     //   eats shit and dies.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    shaderProgram->validate();
+    shaderProgram->use();
+
     // Our buffer still at 0 somehow
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
     
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
@@ -46,17 +52,19 @@ void glutRender() {
     glutSwapBuffers();
 }
 
+/**
+ * Should only do "at most, one frame of work"
+ */
 void glutIdle() {
     static float scale = 0.0f;
     scale += 0.001f;
-    glUniform1f(scaleLoc, sinf(scale));
+    shaderProgram->set_float("scale", sinf(scale));
 
     glutPostRedisplay();
 }
 
 /** 
  * Initialization functions
- *   TODO: Use exceptions
  */
 void registerCallbacks() {
     glutDisplayFunc(glutRender);
@@ -70,10 +78,10 @@ void initGL() {
 
 void initResources() {
     // My stuff
-    Vector3f v[3];
-    v[0] = Vector3f(0.0f, 1.0f, 0.0f);
-    v[1] = Vector3f(1.0f, -1.0f, 0.0f);
-    v[2] = Vector3f(-1.0f, -1.0f, 0.0f);
+    glm::vec4 v[3];
+    v[0] = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
+    v[1] = glm::vec4{1.0f, -1.0f, 0.0f, 1.0f};
+    v[2] = glm::vec4{-1.0f, -1.0f, 0.0f, 1.0f};
 
     // Stick it in da state machine!!!
     glGenBuffers(1, &VBO);
@@ -81,12 +89,9 @@ void initResources() {
 
     // If buffer contents would be changed, GL_DYNAMIC_DRAW should be used instead
     glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
-
-    // Program initialized, get this location
-    scaleLoc = glGetUniformLocation(shaderProgram, "scale");
-    assert(scaleLoc != -1);
 }
 
+/*
 bool compileShader(const GLchar *src, GLint src_len, GLenum type, GLuint& obj) {
     bool err = false;
 
@@ -152,12 +157,16 @@ bool createShaderProgram() {
             // Once program gets complicated, possibly need before every draw call
             glValidateProgram(shaderProgram);
             glUseProgram(shaderProgram);
+
+            // Get locations from program
+            scaleLoc = glGetUniformLocation(shaderProgram, "scale");
+            assert(scaleLoc != -1);
         }
     }
 
     return err;
 }
-
+*/
 bool initGlew() {
     bool err = false;
 
@@ -195,10 +204,11 @@ int main(int argc, char **argv) {
     else if (initGlew()) {
         return -1;
     }
-    else if (createShaderProgram()) {
-        return -1;
-    }
     else {
+        shaderProgram = new Shader(VS_FNAME, FS_FNAME);
+        if (shaderProgram->invalid()) {
+            exit(1);
+        }
         initResources();
         initGL();
         registerCallbacks();
