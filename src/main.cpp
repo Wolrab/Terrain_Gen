@@ -5,50 +5,60 @@
 // GLM
 #include <glm/vec4.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 
 // stdlib
 #include <string>
+#include <vector>
 #include <iostream>
 
 // c
 #include <math.h>
-#include <assert.h> // TODO: Use actuall c++ assertions
 
 // local
 #include "shader.h"
+#include "cube.h"
 
-using namespace std;
-
-GLuint VBO;
+// Must be uninitialized or else everything will crash
+Cube* cube;
 Shader *shaderProgram;
 
 const int WINDOW_WIDTH = 640;
 const int WINDOW_HEIGHT = 480;
+const float AR = float(WINDOW_WIDTH)/WINDOW_HEIGHT;
 
-string VS_FNAME = "src/basic.vs";
-string FS_FNAME = "src/basic.fs";
+// TODO: Camera
+glm::mat4x4 proj = glm::perspective(45.f, AR, 0.1f, 100.f);
+glm::mat4x4 view = glm::mat4x4(1.f);
+
+std::string VS_FNAME = "src/basic.vs";
+std::string FS_FNAME = "src/basic.fs";
 
 /** 
  * Callback functions
  */
 void glutRender() {
-    // If the depth buffer is not cleared, the second rendered frame
-    //   eats shit and dies.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shaderProgram->validate();
     shaderProgram->use();
 
-    // Our buffer still at 0 somehow
-    glEnableVertexAttribArray(0);
+    if (shaderProgram->set_mat4x4f("proj", &proj)) {
+        abort();    
+    }
+    if (shaderProgram->set_mat4x4f("view", &view)) {
+        abort();
+    }
+    if (shaderProgram->set_mat4x4f("world", &(cube->get_world_mat()))) {
+        abort();
+    }
+    if (shaderProgram->set_mat4x4f("model", &(cube->get_model_mat()))) {
+        abort();
+    }
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    shaderProgram->validate();
     
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    
-    glDisableVertexAttribArray(0);
-    
+    cube->draw();
+
     glutSwapBuffers();
 }
 
@@ -56,9 +66,9 @@ void glutRender() {
  * Should only do "at most, one frame of work"
  */
 void glutIdle() {
-    static float scale = 0.0f;
-    scale += 0.001f;
-    shaderProgram->set_float("scale", sinf(scale));
+
+    cube->model_rotate(0.0001f, glm::normalize(glm::vec3(1.f, 1.f, 0.f)));
+
 
     glutPostRedisplay();
 }
@@ -76,103 +86,12 @@ void initGL() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-void initResources() {
-    // My stuff
-    glm::vec4 v[3];
-    v[0] = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
-    v[1] = glm::vec4{1.0f, -1.0f, 0.0f, 1.0f};
-    v[2] = glm::vec4{-1.0f, -1.0f, 0.0f, 1.0f};
-
-    // Stick it in da state machine!!!
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // If buffer contents would be changed, GL_DYNAMIC_DRAW should be used instead
-    glBufferData(GL_ARRAY_BUFFER, sizeof(v), v, GL_STATIC_DRAW);
-}
-
-/*
-bool compileShader(const GLchar *src, GLint src_len, GLenum type, GLuint& obj) {
-    bool err = false;
-
-    obj = glCreateShader(type);
-
-    const GLchar *c_src[1];
-    c_src[0] = src;
-    glShaderSource(obj, 1, c_src, &src_len);
-    glCompileShader(obj);
-
-    GLint success;
-    glGetShaderiv(obj, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        GLchar log[4096];
-        glGetShaderInfoLog(obj, sizeof(log), NULL, log);
-        fprintf(stderr, "Error compiling shader type %d: '%s'\n", type, log);
-
-        err = true;
-    }
-    return err;
-}
-
-bool createShaderProgram() {
-    bool err = false;
-
-    shaderProgram = glCreateProgram();
-    GLuint vs, fs;
-    string vs_src, fs_src;
-
-    if (getShaderSource(VS_FNAME, vs_src)) {
-        err = true;
-    }
-    else if (compileShader(vs_src.c_str(), vs_src.length(), GL_VERTEX_SHADER, vs)) {
-        err = true;
-    }
-    else {
-        glAttachShader(shaderProgram, vs);
-
-        if (getShaderSource(FS_FNAME, fs_src)) {
-            err = true;
-        }
-        else if (compileShader(fs_src.c_str(), fs_src.length(), GL_FRAGMENT_SHADER, fs)) {
-            err = true;
-        }
-        else {
-            glAttachShader(shaderProgram, fs);
-        }
-    }
-
-    // Compilation successfull
-    if (!err) {
-        glLinkProgram(shaderProgram);
-        GLint success;
-        glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-        if (!success) {
-            GLchar log[4096];
-            glGetProgramInfoLog(shaderProgram, sizeof(log), NULL, log);
-            fprintf(stderr, "Error linking program: '%s'\n", log);
-
-            err = true;
-        }
-        else {
-            // Once program gets complicated, possibly need before every draw call
-            glValidateProgram(shaderProgram);
-            glUseProgram(shaderProgram);
-
-            // Get locations from program
-            scaleLoc = glGetUniformLocation(shaderProgram, "scale");
-            assert(scaleLoc != -1);
-        }
-    }
-
-    return err;
-}
-*/
 bool initGlew() {
     bool err = false;
 
     GLenum glew_err = glewInit();
     if (glew_err != GLEW_OK) {
-        cerr << "glew error: glewInit: " << glewGetErrorString(glew_err) << endl;
+        std::cerr << "glew error: glewInit: " << glewGetErrorString(glew_err) << std::endl;
         err = true;
     }
     return err;
@@ -190,8 +109,8 @@ bool initGlut(int *argc, char **argv) {
     // create window
     int window_id = glutCreateWindow("biggly graphics");
     if (!window_id) {
-        cerr << "glut error: Could not create window and associated \
-            openGL context.\nExiting" << endl;
+        std::cerr << "glut error: Could not create window and associated \
+            openGL context.\nExiting" << std::endl;
         err = true;
     }
     return err;
@@ -205,14 +124,23 @@ int main(int argc, char **argv) {
         return -1;
     }
     else {
+        initGL();
         shaderProgram = new Shader(VS_FNAME, FS_FNAME);
         if (shaderProgram->invalid()) {
-            exit(1);
+            return -1;
         }
-        initResources();
-        initGL();
-        registerCallbacks();
-        glutMainLoop();
+        else {
+            cube = new Cube();
+
+            // INITIALIZE MATRICIES
+            view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
+            cube->model_scale(glm::vec3(0.5f, 0.5f, 0.5f));
+
+            // END INITIALIZE MATRICIES
+
+            registerCallbacks();
+            glutMainLoop();
+        }
     }
     return 0;
 }

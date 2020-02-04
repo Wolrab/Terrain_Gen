@@ -1,10 +1,15 @@
 #version 330
 
-layout (location = 0) in vec4 Position;
-out vec4 Color;
-uniform float scale;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 vert_color; // TODO: Just get it inside the fragment shader?
+out vec3 frag_color;
+
+uniform mat4 proj;
+uniform mat4 view;
+uniform mat4 world;
+uniform mat4 model;
 
 void main() {
-    gl_Position = vec4(scale * Position.x, scale * Position.y, Position.z, Position.w);
-    Color = vec4(clamp(Position, 0.0, 1.0));
+    gl_Position = proj * view * world * model * vec4(position, 1.0);
+    frag_color = vert_color;
 }
