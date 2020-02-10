@@ -14,10 +14,12 @@
 
 // c
 #include <math.h>
+#include <time.h>
 
 // local
 #include "shader.h"
 #include "cube.h"
+#include "keyboard.h"
 
 // Must be uninitialized or else everything will crash
 Cube* cube;
@@ -31,6 +33,7 @@ const float AR = float(WINDOW_WIDTH)/WINDOW_HEIGHT;
 glm::mat4x4 proj = glm::perspective(45.f, AR, 0.1f, 100.f);
 glm::mat4x4 view = glm::mat4x4(1.f);
 
+
 std::string VS_FNAME = "src/basic.vs";
 std::string FS_FNAME = "src/basic.fs";
 
@@ -42,6 +45,7 @@ void glutRender() {
 
     shaderProgram->use();
 
+    // TODO: Optimize handing in pre-multiplied matricies
     if (shaderProgram->set_mat4x4f("proj", &proj)) {
         abort();    
     }
@@ -66,10 +70,13 @@ void glutRender() {
  * Should only do "at most, one frame of work"
  */
 void glutIdle() {
-
-    cube->model_rotate(0.0001f, glm::normalize(glm::vec3(1.f, 1.f, 0.f)));
-
-
+    static const float RADS_PER_SEC = 1.f;
+    static clock_t t1 = clock();
+    
+    clock_t t2 = clock();
+    cube->model_rotate((float(t2 - t1)/CLOCKS_PER_SEC)*RADS_PER_SEC, glm::normalize(glm::vec3(1.f, 1.f, 0.f)));
+    t1 = t2;
+    
     glutPostRedisplay();
 }
 
@@ -116,6 +123,12 @@ bool initGlut(int *argc, char **argv) {
     return err;
 }
 
+void quit_normal() {
+    // cleanup
+
+    exit(0);
+}
+
 int main(int argc, char **argv) {
     if (initGlut(&argc, argv)) {
         return -1;
@@ -130,12 +143,16 @@ int main(int argc, char **argv) {
             return -1;
         }
         else {
+            // INITIALIZE KEYBOARD
+            keyboard::keyboard_init();
+            keyboard::register_press_listener_ascii(27, quit_normal);
+            // END INITIALIZE KEYBOARD
+
             cube = new Cube();
 
             // INITIALIZE MATRICIES
             view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
             cube->model_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-
             // END INITIALIZE MATRICIES
 
             registerCallbacks();

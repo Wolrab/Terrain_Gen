@@ -6,10 +6,10 @@ IDIR=include
 SDIR=src
 
 SRC=${wildcard ${SDIR}/*.cpp}
-OUT=biggly_graphics
+OUT=world_gen
 
 ${OUT}: ${SRC}
 	g++ -I${IDIR} -o $@ $^ ${FLAGS} ${LIBS}
 
 clean:
-	rm biggly_graphics
+	rm world_gen

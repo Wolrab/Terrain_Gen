@@ -1,16 +1,9 @@
 Overall:
 glew, freeglut (i.e. glut), OpenGL (3.30?), glm
+(stb_image.h is included as part of the project, but no textures means not a dependency yet)
 
 Temporal Dependance:
 glut: Nothing
 glew: glut must have created an OpenGL context
-cube: glew must have been initialized. The first created cube binds and buffers data.
-    Alternatives!
-        -Some function that waits for an asynchronous global flag
-        -"JuSt InItIaLiZe It WiTh SoMe OtHeR fUnCtIoN," like a normal human
-        -^ I second this because this project is gonna suck anyways.
-        -^^ No! I disagree! There is nothing about the current design of the object to make this not horrible to look at!
-        -^^^ Ok... What about some like, global array of shit to be loaded in?
-        -^^^^ This implies larger scope. So yeah do what you're already doing
-
-    It has been decided no alternatives are needed. Hooray.
+cube (constructor): glew must have been initialized. The first created cube binds and buffers data.
+keyboard (keyboard_init): glew must have been initialized. The initial entry point for 

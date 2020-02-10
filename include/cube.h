@@ -1,6 +1,8 @@
 // No inheretance because I don't know what I'm doing yet
 // The model is a immutable singleton I type all by hand
 // This is all shaping up to be very epic indeed
+#ifndef __CUBE_H
+#define __CUBE_H
 
 #include <GL/glew.h>
 
@@ -37,3 +39,5 @@ private:
     glm::mat4x4 model_mat;
     glm::mat4x4 world_mat;
 };
+
+#endif /* __CUBE_H */

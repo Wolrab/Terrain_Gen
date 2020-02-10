@@ -6,7 +6,6 @@ GLuint *Cube::vbo = nullptr;
 GLuint *Cube::ibo = nullptr;
 
 // Points chosen bottom to top, left to right, front to back
-// IF U CONSIDER 1.0Z TO BE THE FRONT, LIKE SOME KIND OF DINGUS
 const float Cube::vertices[] = {
     -1.f, -1.f,  1.f,    1.f,  0.f,  0.f, // 1R 0
     -1.f, -1.f,  1.f,    0.f,  1.f,  0.f, // 1G 1
