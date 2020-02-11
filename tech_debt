@@ -1,3 +1,6 @@
+#0: The best way to learn OOP is to try to make something big and instantly see it explode. This has
+        been quite fruitful in that regard.
+
 #1: Keyboard Not Suck and Structure for Future Schenanigans
 
 ...
@@ -26,4 +29,5 @@ namespace input {
     ...
     
 }
-    
+
+#2: DESIGN ABOVE SO THAT THE CAMERA IS FIXED JESUS

@@ -20,19 +20,16 @@
 #include "shader.h"
 #include "cube.h"
 #include "keyboard.h"
+#include "free_camera.h"
 
 // Must be uninitialized or else everything will crash
 Cube* cube;
+ack::FreeCamera *camera;
 Shader *shaderProgram;
 
 const int WINDOW_WIDTH = 640;
 const int WINDOW_HEIGHT = 480;
 const float AR = float(WINDOW_WIDTH)/WINDOW_HEIGHT;
-
-// TODO: Camera
-glm::mat4x4 proj = glm::perspective(45.f, AR, 0.1f, 100.f);
-glm::mat4x4 view = glm::mat4x4(1.f);
-
 
 std::string VS_FNAME = "src/basic.vs";
 std::string FS_FNAME = "src/basic.fs";
@@ -46,16 +43,10 @@ void glutRender() {
     shaderProgram->use();
 
     // TODO: Optimize handing in pre-multiplied matricies
-    if (shaderProgram->set_mat4x4f("proj", &proj)) {
-        abort();    
-    }
-    if (shaderProgram->set_mat4x4f("view", &view)) {
+    if (shaderProgram->set_mat4x4f("PV", &(camera->get_perspective_view_mat()))) {
         abort();
     }
-    if (shaderProgram->set_mat4x4f("world", &(cube->get_world_mat()))) {
-        abort();
-    }
-    if (shaderProgram->set_mat4x4f("model", &(cube->get_model_mat()))) {
+    if (shaderProgram->set_mat4x4f("WM", &(cube->get_world_model_mat()))) {
         abort();
     }
 
@@ -70,11 +61,14 @@ void glutRender() {
  * Should only do "at most, one frame of work"
  */
 void glutIdle() {
+    
     static const float RADS_PER_SEC = 1.f;
     static clock_t t1 = clock();
     
     clock_t t2 = clock();
-    cube->model_rotate((float(t2 - t1)/CLOCKS_PER_SEC)*RADS_PER_SEC, glm::normalize(glm::vec3(1.f, 1.f, 0.f)));
+    float dt = float(t2 - t1)/CLOCKS_PER_SEC;
+    cube->model_rotate(dt * RADS_PER_SEC, glm::normalize(glm::vec3(1.f, 1.f, 0.f)));
+    camera->update(dt);
     t1 = t2;
     
     glutPostRedisplay();
@@ -149,11 +143,9 @@ int main(int argc, char **argv) {
             // END INITIALIZE KEYBOARD
 
             cube = new Cube();
-
-            // INITIALIZE MATRICIES
-            view = glm::translate(view, glm::vec3(0.f, 0.f, -3.f));
             cube->model_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-            // END INITIALIZE MATRICIES
+
+            camera = new ack::FreeCamera(AR);
 
             registerCallbacks();
             glutMainLoop();

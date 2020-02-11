@@ -15,8 +15,10 @@ public:
     Cube();
     ~Cube();
 
+// TODO: This is very problematic
     void draw();
 
+// All these functions are fine, handle object local attributes
     void model_reset();
     void model_scale(const glm::vec3& scale);
     void model_translate(const glm::vec3& pos);
@@ -26,18 +28,20 @@ public:
     void world_translate(const glm::vec3& pos);
     void world_rotate(float rads, const glm::vec3& axis);
     
-    const glm::mat4x4& get_model_mat(); // SUS
-    const glm::mat4x4& get_world_mat(); // SUS
+    const glm::mat4x4& get_model_mat();
+    const glm::mat4x4& get_world_mat();
+    const glm::mat4x4& get_world_model_mat();
 
 private:
-    static GLuint *vbo;
-    static GLuint *ibo;
+    static GLuint *_vbo;
+    static GLuint *_ibo;
 
-    const static float vertices[];
-    const static unsigned short indices[];
+    const static float _vertices[];
+    const static unsigned short _indices[];
 
-    glm::mat4x4 model_mat;
-    glm::mat4x4 world_mat;
+    glm::mat4x4 _model_mat;
+    glm::mat4x4 _world_mat;
+    glm::mat4x4 _world_model_mat;
 };
 
 #endif /* __CUBE_H */
