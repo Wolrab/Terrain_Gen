@@ -1,0 +1,29 @@
+#1: Keyboard Not Suck and Structure for Future Schenanigans
+
+...
+
+glutKeyboardFunc(key_pressed);
+glutKeyboardUpFunc(key_released);
+
+...
+
+namespace input {
+    namespace keyboard {
+        key_pressed(char key, int x, int y) {
+            ServiceGetter::getKeyboard()->key_pressed(char key, int x, int y);
+        }
+        key_released(char key, int x, int y) {
+            ServiceGetter::getKeyboard()->key_released(char key, int x, int y);
+        }
+
+        ...
+    }
+
+    namespace mouse {
+        // Same shit
+    }
+
+    ...
+    
+}
+    
